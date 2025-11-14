@@ -1,0 +1,25 @@
+{
+  "name": "pdma-marketplace",
+  "metadata": {
+	    "description": "PDMA Internal Claude Code Plugin Marketplace for team collaboration",
+		"version": "1.0.0"
+  },
+  "owner": {
+    "name": "PDMA Team",
+    "email": "fbarra@tym.es"
+  },
+  "pluginRoot": "plugins",
+  "plugins": [
+    {
+      "name": "censo3-helpers",
+      "description": "Helper commands and utilities for CENSO3 development",
+      "source": "./plugins/censo3-helpers",
+      "version": "1.0.0",
+	  "category": "helpers",
+      "author": {
+        "name": "fbarra@tym.es"
+      },
+      "keywords": ["censo3", "utilities", "helpers"]
+    }
+  ]
+}

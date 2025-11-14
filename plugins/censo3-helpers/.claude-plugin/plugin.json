@@ -1,0 +1,12 @@
+{
+  "name": "censo3-helpers",
+  "version": "1.0.0",
+  "description": "Helper commands and utilities for CENSO3 development workflow",
+  "author": {
+	"name": "PDMA Team",
+    "email": "fbarra@tym.es"
+  },
+  "homepage": "https://github.com/your-org/pdma-marketplace",
+  "license": "MIT",
+  "keywords": ["censo3", "utilities", "helpers", ".net", "angular"]
+}

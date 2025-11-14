@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDMA Claude Code Marketplace</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 3rem;
+        }
+
+        header h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-size: 1.8rem;
+        }
+
+        .card h3 {
+            color: #764ba2;
+            margin-top: 1.5rem;
+            margin-bottom: 0.8rem;
+            font-size: 1.3rem;
+        }
+
+        .installation-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+        }
+
+        .installation-box code {
+            color: #d63384;
+            font-weight: bold;
+        }
+
+        .plugin-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .plugin-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .plugin-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .plugin-card h4 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .plugin-version {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .plugin-description {
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+
+        .plugin-keywords {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .keyword-tag {
+            background: rgba(255,255,255,0.3);
+            padding: 0.3rem 0.8rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+        }
+
+        .info-section {
+            background: #e7f3ff;
+            border-left: 4px solid #0066cc;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+
+        .info-section strong {
+            color: #0066cc;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.8rem 1.5rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(108, 117, 125, 0.4);
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .links {
+            margin-top: 1rem;
+        }
+
+        .links a {
+            color: white;
+            margin: 0 1rem;
+            text-decoration: none;
+            opacity: 0.8;
+            transition: opacity 0.3s ease;
+        }
+
+        .links a:hover {
+            opacity: 1;
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2rem;
+            }
+
+            .plugin-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 PDMA Claude Code Marketplace</h1>
+            <p>Marketplace interno de plugins para el equipo PDMA</p>
+        </header>
+
+        <div class="card">
+            <h2>📦 Instalación del Marketplace</h2>
+            <p>Para comenzar a usar este marketplace en Claude Code, ejecuta el siguiente comando:</p>
+
+            <div class="installation-box">
+                <code>/plugin marketplace add <span id="marketplace-url">http://tu-servidor/pdma-marketplace</span></code>
+            </div>
+
+            <div class="info-section">
+                <strong>💡 Nota:</strong> Reemplaza <code>tu-servidor</code> con la dirección real del servidor IIS donde está alojado este marketplace.
+            </div>
+
+            <h3>📋 Comandos útiles</h3>
+            <div class="installation-box">
+                <code># Ver plugins disponibles</code><br>
+                <code>/plugin marketplace list</code><br><br>
+                <code># Instalar un plugin</code><br>
+                <code>/plugin install censo3-helpers</code><br><br>
+                <code># Ver plugins instalados</code><br>
+                <code>/plugin list</code><br><br>
+                <code># Desinstalar un plugin</code><br>
+                <code>/plugin uninstall censo3-helpers</code>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🔌 Plugins Disponibles</h2>
+            <div id="plugins-container" class="plugin-grid">
+                <div class="plugin-card">
+                    <h4>censo3-helpers</h4>
+                    <span class="plugin-version">v1.0.0</span>
+                    <p class="plugin-description">
+                        Helper commands and utilities for CENSO3 development. Incluye comandos para build, tests y desarrollo.
+                    </p>
+                    <div class="plugin-keywords">
+                        <span class="keyword-tag">censo3</span>
+                        <span class="keyword-tag">utilities</span>
+                        <span class="keyword-tag">helpers</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📚 Recursos</h2>
+            <p>Enlaces útiles para trabajar con plugins de Claude Code:</p>
+            <div class="button-group">
+                <a href="https://docs.claude.com/en/docs/claude-code/plugins" class="btn btn-primary" target="_blank">
+                    📖 Documentación de Plugins
+                </a>
+                <a href="https://docs.claude.com/en/docs/claude-code/plugin-marketplaces" class="btn btn-primary" target="_blank">
+                    🏪 Marketplaces
+                </a>
+                <a href="./.claude-plugin/marketplace.json" class="btn btn-secondary" target="_blank">
+                    📄 Ver marketplace.json
+                </a>
+                <a href="./README.md" class="btn btn-secondary" target="_blank">
+                    📝 Ver README
+                </a>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p>&copy; 2025 PDMA Team - TYM</p>
+            <div class="links">
+                <a href="https://www.tym.es" target="_blank">TYM Website</a>
+                <a href="https://docs.claude.com/en/docs/claude-code" target="_blank">Claude Code Docs</a>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Auto-detect server URL
+        const currentUrl = window.location.origin + window.location.pathname.replace('/index.html', '').replace(/\/$/, '');
+        document.getElementById('marketplace-url').textContent = currentUrl;
+
+        // Load plugins dynamically from marketplace.json
+        fetch('./.claude-plugin/marketplace.json')
+            .then(response => response.json())
+            .then(data => {
+                const pluginsContainer = document.getElementById('plugins-container');
+                if (data.plugins && data.plugins.length > 0) {
+                    pluginsContainer.innerHTML = '';
+                    data.plugins.forEach(plugin => {
+                        const pluginCard = document.createElement('div');
+                        pluginCard.className = 'plugin-card';
+
+                        const keywordsHtml = plugin.keywords
+                            ? plugin.keywords.map(kw => `<span class="keyword-tag">${kw}</span>`).join('')
+                            : '';
+
+                        pluginCard.innerHTML = `
+                            <h4>${plugin.name}</h4>
+                            <span class="plugin-version">v${plugin.version}</span>
+                            <p class="plugin-description">${plugin.description}</p>
+                            ${keywordsHtml ? `<div class="plugin-keywords">${keywordsHtml}</div>` : ''}
+                        `;
+                        pluginsContainer.appendChild(pluginCard);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error loading marketplace.json:', error);
+            });
+    </script>
+</body>
+</html>
