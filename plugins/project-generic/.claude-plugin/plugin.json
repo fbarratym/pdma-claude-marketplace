@@ -1,0 +1,12 @@
+{
+  "name": "project-generic",
+  "version": "1.0.0",
+  "description": "Herramientas genericas para proyectos",
+  "author": {
+	"name": "PDMA Team",
+    "email": "fbarra@tym.es"
+  },
+  "homepage": "https://github.com/fbarratym/pdma-claude-marketplace",
+  "license": "MIT",
+  "keywords": ["generic", "utilities", "helpers", ".net", "project"]
+}

@@ -20,6 +20,17 @@
         "name": "fbarra@tym.es"
       },
       "keywords": ["censo3", "utilities", "helpers"]
+    },
+	{
+      "name": "project-generic",
+      "description": "Herramientas genericas para proyectos",
+      "source": "./plugins/project-generic",
+      "version": "1.0.0",
+	  "category": "helpers",
+      "author": {
+        "name": "fbarra@tym.es"
+      },
+      "keywords": ["generic", "utilities", "helpers", ".net", "project"]
     }
   ]
 }
