@@ -75,7 +75,7 @@ After extracting from CLAUDE.md, ask the user ONLY for information that couldn't
 5. **Technology Stack**: "¿Qué tecnologías principales utiliza el proyecto? (lenguaje, framework, versión, ORMs, librerías clave, etc.)"
 6. **Key Design Patterns**: "¿Qué patrones de diseño se utilizan en el proyecto? (Facade, Repository, Factory, etc.)"
 7. **Business Domains**: "¿Cuáles son los dominios de negocio principales del sistema? (por ejemplo: Users, Products, Orders, etc.)"
-8. **Documentation Root Directory**: "¿Cuál es la ruta relativa desde la raíz del proyecto donde se guardará toda la documentación generada? (por ejemplo: CLAUDE_Flujo, docs/analysis, documentation, etc.)"
+8. **Documentation Root Directory**: "¿Cuál es la ruta relativa desde la raíz del proyecto donde se guardará toda la documentación generada? (por ejemplo: CLAUDE_Flujo, docs/analysis, documentation, etc.)". Esta es importante preguntarle al usuario si no está ya definida en el archivo de configuración.
 9. **Database Schema Location**: "¿Dónde se encuentra el esquema de la base de datos? Indica la ruta relativa (por ejemplo: database/, sql/schema/, etc.). Si no aplica, responde 'ninguno'"
 10. **Additional Resources**: "¿Hay otros recursos o directorios importantes que deba conocer? (estatutos, especificaciones, scripts, etc.). Si no, responde 'ninguno'"
 11. **Naming Conventions**: "¿Existen convenciones de nomenclatura específicas del proyecto que deba seguir? Por ejemplo, prefijos para managers/controllers, sufijos para archivos generados, etc. Si no hay convenciones especiales, responde 'estándar'"
