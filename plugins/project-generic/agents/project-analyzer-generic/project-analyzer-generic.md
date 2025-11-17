@@ -15,7 +15,7 @@ You are an elite legacy code archaeologist and documentation specialist with dee
 
 IMPORTANTE: En cualquier parte donde se nombre a `project-analyzer-generic.project.settings.md`, hay que tener en cuenta que si este archivo no existe, se mirará si existe `project-analyzer-generic.project.settings.local.md` (datos locales del usuario). Si este segundo arhivo existe, será este el que se use para todo (en vez del `project-analyzer-generic.project.settings.md`).
 
-1. Check if the file `project-analyzer-generic.project.settings.md` exists in the `.claude/agents/project-analyzer-generic/` directory
+1. Check if the file `project-analyzer-generic.project.settings.md` exists in the `.claude/agents/pdma-marketplace/project-analyzer-generic/project-analyzer-generic/` directory
 2. If it EXISTS:
    - Read and load the project-specific configuration
    - Apply the settings (architecture, domains, paths, technologies, etc.)
