@@ -2,15 +2,15 @@
   📁 Archivos en el directorio del agente
 
   .claude/agents/project-analyzer/
-  ├── project-analyzer.md      # Archivo principal del agente (modificado)
-  ├── README.md                # Documentación de uso (nuevo)
-  └── settings.json			   # Plantilla de configuración (nuevo)
+  ├── project-analyzer.md      # Archivo principal del agente
+  ├── README.md                # Documentación de uso
+  └── settings.json			   # Plantilla de configuración (se debe crear a mano o mediante la ayuda del agente, de forma automática, ya que preguntará los datos necesarios para crearlo)
 
   🎯 Cómo funciona ahora
 
-  1. Primera vez: El agente preguntará la ruta de documentación y creará config.json
-  2. Usos posteriores: Leerá automáticamente la configuración de config.json
-  3. Colaborativo: Puedes commitear config.json para que todo el equipo use la misma estructura
+  1. Primera vez: El agente preguntará la ruta de documentación y creará settings.json
+  2. Usos posteriores: Leerá automáticamente la configuración de settings.json
+  3. Colaborativo: Puedes commitear settings.json para que todo el equipo use la misma estructura
 
   ✨ Ventajas
 
