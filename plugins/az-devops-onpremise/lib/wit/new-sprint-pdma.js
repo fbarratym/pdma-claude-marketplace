@@ -481,18 +481,20 @@ async function main() {
       console.error(`  → #${id} [${type}] Active: "${title}"`);
       console.error(`    Estimate original: ${est}h  |  Remaining: ${rw}h`);
 
-      // — Calcular nuevo estimate para el original —
-      let newEst = round2(est - rw);
-      if (newEst <= 0) newEst = round2(est / 2);
+      // — Calcular estimates —
+      // Si est-rw <= 0 (tarea sobreestimada), ambos (original y copia) usan est/2
+      const overBudget  = round2(est - rw) <= 0;
+      const newEstOrig  = overBudget ? round2(est / 2) : round2(est - rw); // para TASK_ORIGINAL
+      const newEstCopia = overBudget ? round2(est / 2) : rw;               // para TASK_NUEVA
 
       // — Crear TASK_NUEVA (copia en nueva iteración, en estado Active) —
       const newTitle = titleForCopy(title);
-      console.error(`    Creando copia: "${newTitle}"...`);
+      console.error(`    Creando copia: "${newTitle}" | estimate copia: ${newEstCopia}h${overBudget ? ' (fallback est/2)' : ''}`);
 
       const newId = await createCopy(client, id, {
         'System.Title':                               newTitle,
         'System.IterationPath':                        ITER_NUEVA.path,
-        'Microsoft.VSTS.Scheduling.OriginalEstimate': rw,
+        'Microsoft.VSTS.Scheduling.OriginalEstimate': newEstCopia,
         'Microsoft.VSTS.Scheduling.RemainingWork':    rw,
         'Microsoft.VSTS.Scheduling.CompletedWork':    0
       });
@@ -522,7 +524,7 @@ async function main() {
         await client.patch(`/wit/workitems/${id}`, [
           { op: 'replace', path: '/fields/System.State',                               value: ST.resolved },
           { op: 'replace', path: '/fields/System.Title',                               value: origTitle },
-          { op: 'replace', path: '/fields/Microsoft.VSTS.Scheduling.OriginalEstimate', value: newEst }
+          { op: 'replace', path: '/fields/Microsoft.VSTS.Scheduling.OriginalEstimate', value: newEstOrig }
         ]);
       } catch (e) {
         throw new Error(
@@ -542,7 +544,7 @@ async function main() {
         console.error(`    ⚠ RemainingWork no se pudo poner a 0 explícitamente (ADO puede haberlo gestionado automáticamente)`);
       }
 
-      console.error(`    ✓ Original #${id} → ${ST.resolved} | título: "${origTitle}" | estimate: ${newEst}h | remaining: 0h`);
+      console.error(`    ✓ Original #${id} → ${ST.resolved} | título: "${origTitle}" | estimate: ${newEstOrig}h | remaining: 0h`);
       countCopiadas++;
     }
   }
