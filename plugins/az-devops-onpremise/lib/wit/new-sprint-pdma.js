@@ -466,9 +466,13 @@ async function main() {
     if (state === ST.proposed) {
       // ── Proposed/New: mover a la nueva iteración ──────────────────────────
       console.error(`  → #${id} [${type}] ${ST.proposed}: moviendo a "${ITER_NUEVA.name}"...`);
-      await client.patch(`/wit/workitems/${id}`, [{
-        op: 'replace', path: '/fields/System.IterationPath', value: ITER_NUEVA.path
-      }]);
+      try {
+        await client.patch(`/wit/workitems/${id}`, [{
+          op: 'replace', path: '/fields/System.IterationPath', value: ITER_NUEVA.path
+        }]);
+      } catch (e) {
+        throw new Error(`No se pudo mover #${id} a "${ITER_NUEVA.name}": ${e.message}`);
+      }
       console.error(`    ✓ Movida`);
       countMovidas++;
 
@@ -494,24 +498,37 @@ async function main() {
       });
       console.error(`    ✓ Copia creada: #${newId}`);
 
-      // Poner TASK_NUEVA en Active (nace en Proposed por defecto ADO)
+      // Poner TASK_NUEVA en Active (nace en el estado inicial por defecto ADO)
+      // Si falla: paramos — no queremos resolver el original si la copia no está bien
       try {
         await client.patch(`/wit/workitems/${newId}`, [{
-          op: 'replace', path: '/fields/System.State', value: 'Active'
+          op: 'replace', path: '/fields/System.State', value: ST.active
         }]);
-        console.error(`    ✓ #${newId} → Active`);
+        console.error(`    ✓ #${newId} → ${ST.active}`);
       } catch (e) {
-        console.error(`    ⚠ No se pudo poner #${newId} en Active: ${e.message}`);
+        throw new Error(
+          `No se pudo poner la copia #${newId} en "${ST.active}": ${e.message}\n` +
+          `  El original #${id} NO ha sido modificado. Corrija manualmente #${newId} y vuelva a ejecutar.`
+        );
       }
 
       // — Actualizar TASK_ORIGINAL (→ estado de cierre, título con (1), tiempos ajustados) —
+      // Si falla: la copia #newId ya existe en Active — informamos del estado parcial
       const origTitle = titleForOriginal(title);
-      await client.patch(`/wit/workitems/${id}`, [
-        { op: 'replace', path: '/fields/System.State',                               value: ST.resolved },
-        { op: 'replace', path: '/fields/System.Title',                               value: origTitle },
-        { op: 'replace', path: '/fields/Microsoft.VSTS.Scheduling.OriginalEstimate', value: newEst },
-        { op: 'replace', path: '/fields/Microsoft.VSTS.Scheduling.RemainingWork',    value: 0 }
-      ]);
+      try {
+        await client.patch(`/wit/workitems/${id}`, [
+          { op: 'replace', path: '/fields/System.State',                               value: ST.resolved },
+          { op: 'replace', path: '/fields/System.Title',                               value: origTitle },
+          { op: 'replace', path: '/fields/Microsoft.VSTS.Scheduling.OriginalEstimate', value: newEst },
+          { op: 'replace', path: '/fields/Microsoft.VSTS.Scheduling.RemainingWork',    value: 0 }
+        ]);
+      } catch (e) {
+        throw new Error(
+          `No se pudo actualizar el original #${id}: ${e.message}\n` +
+          `  ATENCIÓN: la copia #${newId} ("${newTitle}") ya fue creada y está en "${ST.active}".\n` +
+          `  El original #${id} sigue en "${ST.active}" sin modificar. Corrija manualmente.`
+        );
+      }
       console.error(`    ✓ Original #${id} → ${ST.resolved} | título: "${origTitle}" | estimate: ${newEst}h | remaining: 0h`);
       countCopiadas++;
     }
