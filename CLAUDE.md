@@ -13,9 +13,19 @@ pdma-claude-marketplace/
 │   │   ├── .claude-plugin/plugin.json
 │   │   ├── commands/             # Comandos ejecutables (/build-all, /run-tests, /start-dev)
 │   │   └── agents/               # Agentes especializados (database-helper)
-│   └── project-generic/          # Plugin genérico reutilizable para cualquier proyecto
+│   ├── project-generic/          # Plugin genérico reutilizable para cualquier proyecto
+│   │   ├── .claude-plugin/plugin.json
+│   │   └── agents/project-analyzer/  # Agente de análisis de codebases legacy
+│   └── az-devops-onpremise/      # Skills para Azure DevOps on-premise via API REST
 │       ├── .claude-plugin/plugin.json
-│       └── agents/project-analyzer/  # Agente de análisis de codebases legacy
+│       ├── lib/                  # Scripts Node.js ejecutables (sin dependencias externas)
+│       │   ├── config.js         # Carga config.local.json
+│       │   ├── api-client.js     # Cliente HTTP base para ADO REST API
+│       │   └── wit/              # Work Item Tracking
+│       └── skills/               # Skills invocables
+│           └── devops-work-items/
+│               ├── SKILL.md      # Definición del skill
+│               └── config.local.json  # (gitignored) Configuración por usuario
 └── README.md
 ```
 
@@ -36,7 +46,7 @@ Herramientas genéricas independientes del proyecto.
 
 1. Crear carpeta en `plugins/<nombre-plugin>/`
 2. Añadir `.claude-plugin/plugin.json` con la metadata (ver plugins existentes como referencia)
-3. Crear subcarpetas `commands/` y/o `agents/` con archivos `.md`
+3. Crear subcarpetas `commands/`, `agents/` y/o `skills/` con archivos `.md`
 4. Registrar el plugin en `.claude-plugin/marketplace.json`
 
 ### Estructura mínima de `plugin.json`
@@ -64,6 +74,23 @@ model: claude-sonnet-4-6
 color: blue
 ---
 Instrucciones del agente...
+```
+
+### Formato de skills (`skills/<nombre>/SKILL.md`)
+Skills invocables directamente. Siempre se llaman `SKILL.md` — el nombre de la carpeta es el nombre del skill.
+Pueden incluir scripts de soporte en `lib/` dentro del plugin.
+```yaml
+---
+name: nombre-skill
+description: Descripción detallada con ejemplos de cuándo invocarlo
+version: 1.0.0
+plugin: nombre-plugin
+tools:
+  - Bash
+  - Read
+  - Write
+---
+Instrucciones del skill...
 ```
 
 ## Convenciones
