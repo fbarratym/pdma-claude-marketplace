@@ -6,13 +6,15 @@
  * Script autónomo para inicializar un nuevo sprint PDMA.
  *
  * Uso:
- *   node new-sprint-pdma.js "<ITERACION_PRINCIPAL_NUEVA>"
+ *   node new-sprint-pdma.js <PROYECTO> "<ITERACION_PRINCIPAL_NUEVA>"
  *
- * Donde ITERACION_PRINCIPAL_NUEVA es el nombre EXACTO de la iteración destino
+ * Donde PROYECTO es el nombre del proyecto tal como aparece en config.local.json
+ * e ITERACION_PRINCIPAL_NUEVA es el nombre EXACTO de la iteración destino
  * (ya debe existir en Azure DevOps).
  *
  * Ejemplo:
- *   node new-sprint-pdma.js "1.1.36 (2026 mayo)"
+ *   node new-sprint-pdma.js CENSO3 "1.1.36 (2026 mayo)"
+ *   node new-sprint-pdma.js AppCode "Iteration 5"
  *
  * El script:
  *   1. Valida que la iteración existe y localiza la anterior (ITERACION_ACTUAL).
@@ -23,9 +25,10 @@
  *   6. Muestra resumen de CompletedWork por persona en ITERACION_ACTUAL.
  */
 
-const AdoApiClient = require('../api-client');
-const path         = require('path');
-const fs           = require('fs');
+const AdoApiClient       = require('../api-client');
+const { loadConfig }     = require('../config');
+const path               = require('path');
+const fs                 = require('fs');
 
 // Fichero de log acumulativo junto a config.local.json (raíz del plugin)
 const LOG_FILE = path.resolve(__dirname, '../../sprint-pdma.log.md');
@@ -412,16 +415,19 @@ async function main() {
   const startTime  = new Date();
   const logEntries = [];   // entradas de cambios para el log
 
-  const [,, iterArg] = process.argv;
+  const [,, projectArg, iterArg] = process.argv;
 
-  if (!iterArg) {
-    console.error('ERROR: Se requiere el nombre exacto de la iteración destino.');
-    console.error('Uso: node new-sprint-pdma.js "<ITERACION_PRINCIPAL_NUEVA>"');
-    console.error('Ejemplo: node new-sprint-pdma.js "1.1.36 (2026 mayo)"');
+  if (!projectArg || !iterArg) {
+    console.error('ERROR: Se requieren el nombre del proyecto y la iteración destino.');
+    console.error('Uso: node new-sprint-pdma.js <PROYECTO> "<ITERACION_PRINCIPAL_NUEVA>"');
+    console.error('Ejemplo: node new-sprint-pdma.js CENSO3 "1.1.36 (2026 mayo)"');
+    console.error('         node new-sprint-pdma.js AppCode "Iteration 5"');
     process.exit(1);
   }
 
-  const client = new AdoApiClient();
+  const cfg    = loadConfig(projectArg);
+  const client = new AdoApiClient(cfg);
+  console.error(`Proyecto: "${cfg.name}" (${cfg.collection}/${cfg.project})\n`);
 
   // ────────────────────────────────────────────────────────────────────────────
   // [1/6] Cargar iteraciones y validar entrada

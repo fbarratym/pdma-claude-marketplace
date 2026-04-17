@@ -23,8 +23,12 @@ const { loadConfig } = require('./config');
 const DEFAULT_API_VERSION = '7.0';
 
 class AdoApiClient {
-  constructor() {
-    this.cfg = loadConfig();
+  /**
+   * @param {object|null} cfg  Config pre-cargada (resultado de loadConfig). Si se omite,
+   *                           se carga automáticamente la primera entrada de config.local.json.
+   */
+  constructor(cfg = null) {
+    this.cfg = cfg || loadConfig();
     this._authHeader = 'Basic ' + Buffer.from(`:${this.cfg.pat}`).toString('base64');
   }
 

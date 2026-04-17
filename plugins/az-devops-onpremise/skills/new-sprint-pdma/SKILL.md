@@ -1,6 +1,6 @@
 ---
 name: new-sprint-pdma
-description: Inicializa un nuevo sprint PDMA de forma autónoma. Úsalo cuando el usuario diga "crear nuevo sprint", "inicializar sprint", "preparar siguiente sprint", "arrancar el sprint X" o similar. El usuario debe indicar el nombre exacto de la iteración destino (ya debe existir en ADO). El script valida, comprueba tareas pendientes, procesa Proposed y Active, y genera un resumen.
+description: Inicializa un nuevo sprint PDMA de forma autónoma. Úsalo cuando el usuario diga "crear nuevo sprint", "inicializar sprint", "preparar siguiente sprint", "arrancar el sprint X" o similar. El usuario debe indicar el proyecto (nombre en config.local.json) y el nombre exacto de la iteración destino (ya debe existir en ADO). El script valida, comprueba tareas pendientes, procesa Proposed y Active, y genera un resumen.
 version: 1.0.0
 plugin: az-devops-onpremise
 tools:
@@ -26,16 +26,18 @@ Guarda la ruta obtenida en `SCRIPT_PATH`.
 ## Uso
 
 ```bash
-node "$SCRIPT_PATH" "<ITERACION_PRINCIPAL_NUEVA>"
+node "$SCRIPT_PATH" <PROYECTO> "<ITERACION_PRINCIPAL_NUEVA>"
 ```
 
-El parámetro es el **nombre exacto** de la iteración destino (ya debe existir en Azure DevOps).
+- `PROYECTO`: nombre del proyecto tal como aparece en `config.local.json` (campo `name`).
+- `ITERACION_PRINCIPAL_NUEVA`: nombre **exacto** de la iteración destino (ya debe existir en Azure DevOps).
 
 ### Ejemplos
 
 ```bash
-node "$SCRIPT_PATH" "1.1.36 (2026 mayo)"
-node "$SCRIPT_PATH" "1.1.37 (2026 junio 1)"
+node "$SCRIPT_PATH" CENSO3 "1.1.36 (2026 mayo)"
+node "$SCRIPT_PATH" CENSO3 "1.1.37 (2026 junio 1)"
+node "$SCRIPT_PATH" AppCode "Iteration 5"
 ```
 
 ---
