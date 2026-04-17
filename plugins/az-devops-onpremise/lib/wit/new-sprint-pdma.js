@@ -513,14 +513,16 @@ async function main() {
       }
 
       // — Actualizar TASK_ORIGINAL (→ estado de cierre, título con (1), tiempos ajustados) —
-      // Si falla: la copia #newId ya existe en Active — informamos del estado parcial
+      // Se hace en dos PATCHes: algunos templates (Agile) no permiten combinar el cambio
+      // de estado con RemainingWork=0 en la misma llamada (regla de campo del template).
       const origTitle = titleForOriginal(title);
+
+      // PATCH 1: estado + título + estimate (lo crítico)
       try {
         await client.patch(`/wit/workitems/${id}`, [
           { op: 'replace', path: '/fields/System.State',                               value: ST.resolved },
           { op: 'replace', path: '/fields/System.Title',                               value: origTitle },
-          { op: 'replace', path: '/fields/Microsoft.VSTS.Scheduling.OriginalEstimate', value: newEst },
-          { op: 'replace', path: '/fields/Microsoft.VSTS.Scheduling.RemainingWork',    value: 0 }
+          { op: 'replace', path: '/fields/Microsoft.VSTS.Scheduling.OriginalEstimate', value: newEst }
         ]);
       } catch (e) {
         throw new Error(
@@ -529,6 +531,17 @@ async function main() {
           `  El original #${id} sigue en "${ST.active}" sin modificar. Corrija manualmente.`
         );
       }
+
+      // PATCH 2: RemainingWork=0 por separado (algunos templates lo gestionan automáticamente
+      // al cerrar; si falla, sólo avisamos)
+      try {
+        await client.patch(`/wit/workitems/${id}`, [
+          { op: 'replace', path: '/fields/Microsoft.VSTS.Scheduling.RemainingWork', value: 0 }
+        ]);
+      } catch {
+        console.error(`    ⚠ RemainingWork no se pudo poner a 0 explícitamente (ADO puede haberlo gestionado automáticamente)`);
+      }
+
       console.error(`    ✓ Original #${id} → ${ST.resolved} | título: "${origTitle}" | estimate: ${newEst}h | remaining: 0h`);
       countCopiadas++;
     }
