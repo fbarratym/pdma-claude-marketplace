@@ -4,34 +4,37 @@
  * config.js
  * Carga y valida la configuración de conexión a Azure DevOps.
  *
- * El fichero config.local.json se busca SIEMPRE relativo a este fichero:
- *   ../skills/devops-work-items/config.local.json
+ * El fichero config.local.json se encuentra en la RAÍZ del plugin:
+ *   plugins/az-devops-onpremise/config.local.json
+ * (un nivel por encima de esta carpeta lib/)
  *
  * Estructura esperada:
  * {
- *   "serverUrl":   "https://tfs.empresa.com/tfs",
- *   "collection":  "DefaultCollection",
- *   "project":     "mi-proyecto",
- *   "pat":         "xxxxxxxxxxxx"
+ *   "serverUrl":    "https://tfs.empresa.com/tfs",   <- URL base del servidor
+ *   "collection":   "DefaultCollection",              <- Nombre de la colección
+ *   "project":      "mi-proyecto",                    <- Nombre del proyecto
+ *   "pat":          "xxxxxxxxxxxx",                   <- Personal Access Token
+ *   "defaultTeam":  "mi-proyecto"                     <- (opcional) Equipo por defecto
  * }
+ *
+ * Si "defaultTeam" no se especifica, se usa el nombre del proyecto como equipo.
+ * (Azure DevOps crea automáticamente un equipo con el mismo nombre que el proyecto)
  */
 
 const path = require('path');
 const fs   = require('fs');
 
-const CONFIG_PATH = path.resolve(
-  __dirname,
-  '../skills/devops-work-items/config.local.json'
-);
+const CONFIG_PATH = path.resolve(__dirname, '../config.local.json');
 
 function loadConfig() {
   // ── 1. Verificar que existe ────────────────────────────────────────────────
   if (!fs.existsSync(CONFIG_PATH)) {
     const template = {
-      serverUrl:  'https://your-tfs-server/tfs',
-      collection: 'DefaultCollection',
-      project:    'your-project',
-      pat:        'your-personal-access-token'
+      serverUrl:   'https://your-tfs-server/tfs',
+      collection:  'DefaultCollection',
+      project:     'your-project',
+      pat:         'your-personal-access-token',
+      defaultTeam: 'your-project'
     };
     console.error('ERROR: Fichero de configuración no encontrado.');
     console.error(`  Ruta esperada: ${CONFIG_PATH}`);
@@ -58,13 +61,23 @@ function loadConfig() {
   }
 
   // ── 4. Normalizar y construir URLs ─────────────────────────────────────────
-  cfg.serverUrl = cfg.serverUrl.replace(/\/+$/, '');
-  cfg.baseUrl   = `${cfg.serverUrl}/${cfg.collection}/${cfg.project}/_apis`;
+  cfg.serverUrl   = cfg.serverUrl.replace(/\/+$/, '');
+  cfg.defaultTeam = cfg.defaultTeam || cfg.project;
 
-  // Rutas internas (para referencia del agente)
+  // URLs base por contexto
+  cfg.projectBaseUrl    = `${cfg.serverUrl}/${cfg.collection}/${cfg.project}/_apis`;
+  cfg.collectionBaseUrl = `${cfg.serverUrl}/${cfg.collection}/_apis`;
+
+  // Alias para compatibilidad con api-client existente
+  cfg.baseUrl = cfg.projectBaseUrl;
+
+  // Rutas internas
   cfg._configPath = CONFIG_PATH;
   cfg._pluginRoot = path.resolve(__dirname, '..');
-  cfg._scriptsDir = path.resolve(__dirname, 'wit');
+  cfg._scriptsDir = {
+    wit:  path.resolve(__dirname, 'wit'),
+    work: path.resolve(__dirname, 'work')
+  };
 
   return cfg;
 }

@@ -4,12 +4,16 @@
  * api-client.js
  * Cliente HTTP base para la API REST de Azure DevOps on-premise.
  *
- * Autenticación: Basic Auth con PAT (campo pat del config).
+ * Autenticación: Basic Auth con PAT (campo "pat" del config).
  *   Header: Authorization: Basic base64(:PAT)
  *
- * Acepta certificados autofirmados (habitual en instalaciones on-premise).
- * Versión de API por defecto: 7.0 (compatible con Azure DevOps Server 2022+).
- * Para TFS 2018 usar 5.0; para TFS 2015-2017 usar 4.1 o 3.0.
+ * Acepta certificados autofirmados (habitual en on-premise).
+ * Versión de API por defecto: 7.0
+ *
+ * Contextos de URL soportados:
+ *   - Proyecto:    {server}/{collection}/{project}/_apis/...         (get / post)
+ *   - Colección:   {server}/{collection}/_apis/...                   (getCollection)
+ *   - Equipo:      {server}/{collection}/{project}/{team}/_apis/...  (getTeam / postTeam)
  */
 
 const https  = require('https');
@@ -21,34 +25,59 @@ const DEFAULT_API_VERSION = '7.0';
 class AdoApiClient {
   constructor() {
     this.cfg = loadConfig();
-    // Basic auth: usuario vacío + PAT como contraseña
     this._authHeader = 'Basic ' + Buffer.from(`:${this.cfg.pat}`).toString('base64');
   }
 
+  // ── Helpers de URL ─────────────────────────────────────────────────────────
+
+  /** URL en contexto de proyecto: {server}/{collection}/{project}/_apis{path} */
+  projectUrl(apiPath) {
+    return `${this.cfg.projectBaseUrl}${apiPath}`;
+  }
+
+  /** URL en contexto de colección: {server}/{collection}/_apis{path} */
+  collectionUrl(apiPath) {
+    return `${this.cfg.collectionBaseUrl}${apiPath}`;
+  }
+
+  /** URL en contexto de equipo: {server}/{collection}/{project}/{team}/_apis{path} */
+  teamUrl(team, apiPath) {
+    const t = encodeURIComponent(team || this.cfg.defaultTeam);
+    return `${this.cfg.serverUrl}/${this.cfg.collection}/${this.cfg.project}/${t}/_apis${apiPath}`;
+  }
+
+  // ── Métodos HTTP ───────────────────────────────────────────────────────────
+
   /**
-   * GET a la API REST de ADO.
-   * @param {string} apiPath  Ruta relativa al baseUrl (ej: '/wit/workitems/123')
-   * @param {object} params   Query params adicionales
+   * GET — acepta ruta relativa al baseUrl del proyecto O URL completa.
+   * @param {string} apiPathOrUrl  Ruta (ej: '/wit/workitems/1') o URL completa
+   * @param {object} params        Query params adicionales
    */
-  async get(apiPath, params = {}) {
+  async get(apiPathOrUrl, params = {}) {
     params['api-version'] = params['api-version'] || DEFAULT_API_VERSION;
-    const url = this.cfg.baseUrl + apiPath + this._buildQS(params);
+    const url = this._resolveUrl(apiPathOrUrl) + this._buildQS(params);
     return this._request('GET', url, null);
   }
 
   /**
-   * POST a la API REST de ADO.
-   * @param {string} apiPath  Ruta relativa al baseUrl
-   * @param {object} body     Cuerpo de la petición (se serializa a JSON)
-   * @param {object} params   Query params adicionales
+   * POST — acepta ruta relativa al baseUrl del proyecto O URL completa.
+   * @param {string} apiPathOrUrl  Ruta o URL completa
+   * @param {object} body          Cuerpo de la petición
+   * @param {object} params        Query params adicionales
    */
-  async post(apiPath, body, params = {}) {
+  async post(apiPathOrUrl, body, params = {}) {
     params['api-version'] = params['api-version'] || DEFAULT_API_VERSION;
-    const url = this.cfg.baseUrl + apiPath + this._buildQS(params);
+    const url = this._resolveUrl(apiPathOrUrl) + this._buildQS(params);
     return this._request('POST', url, body);
   }
 
   // ── Privado ────────────────────────────────────────────────────────────────
+
+  _resolveUrl(apiPathOrUrl) {
+    return apiPathOrUrl.startsWith('http')
+      ? apiPathOrUrl
+      : this.cfg.projectBaseUrl + apiPathOrUrl;
+  }
 
   _buildQS(params) {
     const parts = Object.entries(params)
@@ -76,7 +105,7 @@ class AdoApiClient {
           'Content-Type':  'application/json',
           'Accept':        'application/json'
         },
-        rejectUnauthorized: false   // Permite certs autofirmados (on-premise)
+        rejectUnauthorized: false
       };
 
       if (bodyData) {

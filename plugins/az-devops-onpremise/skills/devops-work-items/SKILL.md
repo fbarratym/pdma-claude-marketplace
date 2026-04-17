@@ -26,12 +26,12 @@ find "$HOME" -name "get-workitem.js" -path "*/az-devops-onpremise/lib/wit/*" 2>/
 
 De la ruta obtenida:
 - `SCRIPTS_DIR` = la carpeta que contiene ese fichero (`lib/wit/`)
-- `CONFIG_FILE`  = dos niveles arriba + `skills/devops-work-items/config.local.json`
+- `CONFIG_FILE`  = dos niveles arriba + `config.local.json` (raíz del plugin, compartido con todos los skills)
 
 Ejemplo:
 ```
 SCRIPTS_DIR  = /c/Users/fbarra.TYM/.../az-devops-onpremise/lib/wit
-CONFIG_FILE  = /c/Users/fbarra.TYM/.../az-devops-onpremise/skills/devops-work-items/config.local.json
+CONFIG_FILE  = /c/Users/fbarra.TYM/.../az-devops-onpremise/config.local.json
 ```
 
 ### 0.2 Verificar Node.js
@@ -68,7 +68,7 @@ Pedir al usuario:
    - Cómo obtenerlo: Azure DevOps → icono usuario → Security → Personal Access Tokens → New Token
    - Scope mínimo requerido: **Work Items: Read**
 
-Crear el fichero:
+Crear el fichero (ubicado en la raíz del plugin, compartido con todos los skills):
 
 ```bash
 cat > "$CONFIG_FILE" << 'EOF'
@@ -76,7 +76,8 @@ cat > "$CONFIG_FILE" << 'EOF'
   "serverUrl": "<serverUrl>",
   "collection": "<collection>",
   "project": "<project>",
-  "pat": "<pat>"
+  "pat": "<pat>",
+  "defaultTeam": "<project>"
 }
 EOF
 ```
