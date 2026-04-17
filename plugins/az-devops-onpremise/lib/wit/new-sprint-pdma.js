@@ -112,17 +112,31 @@ function titleForOriginal(title) {
 /**
  * Aplana el árbol de iteraciones devolviendo solo los nodos hoja (sprints reales),
  * en el orden en que aparecen en el árbol.
+ *
+ * El nodo raíz devuelto por la API tiene:
+ *   name: "PROYECTO"   path: "\PROYECTO\Iteration"
+ * Sus hijos (o nietos) son las iteraciones reales. El segmento "Iteration" es
+ * interno de ADO y no aparece en System.IterationPath de los work items.
+ * Sistema.IterationPath real = projectName + nodePath.slice(rootPath.length)
+ *   Ej: rootPath="\AppCode\Iteration", nodePath="\AppCode\Iteration\Iteration 1"
+ *       → "AppCode" + "\Iteration 1" = "AppCode\Iteration 1"  ✓
  */
-function flattenIterations(node, acc = []) {
-  if (node.children && node.children.length > 0) {
-    for (const child of node.children) {
-      flattenIterations(child, acc);
+function flattenIterations(rootNode) {
+  const rootPath    = rootNode.path;    // e.g. "\AppCode\Iteration"
+  const projectName = rootNode.name;    // e.g. "AppCode"
+  const acc = [];
+
+  function recurse(node) {
+    if (node.children && node.children.length > 0) {
+      for (const child of node.children) recurse(child);
+    } else {
+      const suffix   = node.path.slice(rootPath.length); // e.g. "\Iteration 1"
+      const iterPath = projectName + suffix;              // e.g. "AppCode\Iteration 1"
+      acc.push({ name: node.name, path: iterPath, identifier: node.identifier });
     }
-  } else {
-    // node.path viene como "\CENSO3\1\1.1.35 (2026 abril 2)"; quitamos la barra inicial
-    const iterPath = (node.path || '').replace(/^[\\\/]/, '');
-    acc.push({ name: node.name, path: iterPath, identifier: node.identifier });
   }
+
+  recurse(rootNode);
   return acc;
 }
 
@@ -140,6 +154,41 @@ function printBlockSummary(items, label) {
     console.error(`       "${f['System.Title']}"`);
   }
   console.error('─'.repeat(72));
+}
+
+// ── Detección de estados del proyecto ───────────────────────────────────────
+
+/**
+ * Detecta automáticamente los nombres de estado para este proyecto consultando
+ * la API de tipos de work item. Usa las categorías de ADO (independientes del
+ * template: Agile, Scrum, CMMI o custom) para mapear conceptos semánticos:
+ *
+ *   proposed → categoría "Proposed"  (CMMI: "Proposed", Agile/Scrum: "New")
+ *   active   → "Active" (igual en todos los templates)
+ *   resolved → categoría "Resolved"  (CMMI: "Resolved")
+ *              o categoría "Completed" si no existe "Resolved" (Agile: "Closed", Scrum: "Done")
+ *
+ * @returns {{ proposed: string, active: string, resolved: string }}
+ */
+async function detectStates(client) {
+  let states = [];
+  try {
+    const r = await client.get('/wit/workitemtypes/Task/states');
+    states   = r.value || [];
+  } catch (e) {
+    console.error(`  ⚠ No se pudieron detectar estados (${e.message}). Usando defaults CMMI.`);
+  }
+
+  // Índice por categoría (primera coincidencia)
+  const byCategory = {};
+  for (const s of states) {
+    if (!byCategory[s.category]) byCategory[s.category] = s.name;
+  }
+
+  const proposed = byCategory['Proposed']  || 'Proposed';
+  const resolved = byCategory['Resolved']  || byCategory['Completed'] || 'Resolved';
+
+  return { proposed, active: 'Active', resolved };
 }
 
 // ── Acceso a datos ──────────────────────────────────────────────────────────
@@ -333,6 +382,15 @@ async function main() {
   console.error(`  Iteración origen (actual):  "${ITER_ACTUAL.name}"`);
 
   // ────────────────────────────────────────────────────────────────────────────
+  // [1b] Detectar estados del proyecto (se adapta a Agile, Scrum, CMMI, custom)
+  // ────────────────────────────────────────────────────────────────────────────
+  console.error('\nDetectando estados del proyecto...');
+  const ST = await detectStates(client);
+  // Estados "cerrado": el resolved + "Closed" como red de seguridad (sin duplicados)
+  const closedStates = [...new Set([ST.resolved, 'Closed'])];
+  console.error(`  Estados detectados → pendiente: "${ST.proposed}" | activo: "${ST.active}" | cierre: "${ST.resolved}"`);
+
+  // ────────────────────────────────────────────────────────────────────────────
   // [2/6] Revisar 5 iteraciones anteriores a ITERACION_ACTUAL
   // ────────────────────────────────────────────────────────────────────────────
   console.error('\n[2/6] Revisando iteraciones anteriores por pendientes...');
@@ -340,7 +398,7 @@ async function main() {
   let hayPendientesAnteriores = false;
 
   for (const iter of prevIters) {
-    const pending = await getItems(client, iter.path, ['Active', 'Proposed']);
+    const pending = await getItems(client, iter.path, [ST.active, ST.proposed]);
     if (pending.length > 0) {
       printBlockSummary(pending, `Pendientes en "${iter.name}"`);
       hayPendientesAnteriores = true;
@@ -348,46 +406,46 @@ async function main() {
   }
 
   if (hayPendientesAnteriores) {
-    console.error('\n❌ Hay tareas/bugs Active o Proposed en iteraciones anteriores.');
+    console.error(`\n❌ Hay tareas/bugs "${ST.active}" o "${ST.proposed}" en iteraciones anteriores.`);
     console.error('   Ciérralas o muévelas antes de continuar.');
     process.exit(1);
   }
   console.error('  ✓ Sin pendientes en iteraciones anteriores.');
 
   // ────────────────────────────────────────────────────────────────────────────
-  // [3/6] Resolved/Closed con RemainingWork > 0 en ITERACION_ACTUAL
+  // [3/6] Cerradas con RemainingWork > 0 en ITERACION_ACTUAL
   // ────────────────────────────────────────────────────────────────────────────
-  console.error('\n[3/6] Revisando Resolved/Closed con horas restantes en iteración actual...');
-  const resolvedConRemaining = (await getItems(client, ITER_ACTUAL.path, ['Resolved', 'Closed']))
+  console.error(`\n[3/6] Revisando ${closedStates.join('/')} con horas restantes en iteración actual...`);
+  const resolvedConRemaining = (await getItems(client, ITER_ACTUAL.path, closedStates))
     .filter(wi => (wi.fields['Microsoft.VSTS.Scheduling.RemainingWork'] ?? 0) > 0);
 
   if (resolvedConRemaining.length > 0) {
-    printBlockSummary(resolvedConRemaining, 'Resolved/Closed con RemainingWork > 0');
+    printBlockSummary(resolvedConRemaining, `${closedStates.join('/')} con RemainingWork > 0`);
     console.error('\n❌ Corrígelas antes de continuar (pon RemainingWork a 0 o devuélvelas a Active).');
     process.exit(1);
   }
-  console.error('  ✓ Sin Resolved/Closed con horas restantes.');
+  console.error('  ✓ Sin tareas cerradas con horas restantes.');
 
   // ────────────────────────────────────────────────────────────────────────────
   // [4/6] Active con RemainingWork <= 0 en ITERACION_ACTUAL
   // ────────────────────────────────────────────────────────────────────────────
-  console.error('\n[4/6] Revisando Active con horas restantes a 0...');
-  const activeConCeroRemaining = (await getItems(client, ITER_ACTUAL.path, ['Active']))
+  console.error(`\n[4/6] Revisando "${ST.active}" con horas restantes a 0...`);
+  const activeConCeroRemaining = (await getItems(client, ITER_ACTUAL.path, [ST.active]))
     .filter(wi => (wi.fields['Microsoft.VSTS.Scheduling.RemainingWork'] ?? 0) <= 0);
 
   if (activeConCeroRemaining.length > 0) {
-    printBlockSummary(activeConCeroRemaining, 'Active con RemainingWork <= 0');
+    printBlockSummary(activeConCeroRemaining, `"${ST.active}" con RemainingWork <= 0`);
     console.error('\n❌ Corrígelas antes de continuar (ciérralas o asigna horas restantes).');
     process.exit(1);
   }
-  console.error('  ✓ Sin Active con horas a 0.');
+  console.error('  ✓ Sin activas con horas a 0.');
 
   // ────────────────────────────────────────────────────────────────────────────
   // [5/6] Procesar Proposed y Active de ITERACION_ACTUAL
   // ────────────────────────────────────────────────────────────────────────────
   console.error('\n[5/6] Procesando tareas y bugs de la iteración actual...\n');
 
-  const toProcess = await getItems(client, ITER_ACTUAL.path, ['Proposed', 'Active']);
+  const toProcess = await getItems(client, ITER_ACTUAL.path, [ST.proposed, ST.active]);
 
   if (toProcess.length === 0) {
     console.error('  (No hay tareas Proposed ni Active que procesar)');
@@ -405,16 +463,16 @@ async function main() {
     const rw     = f['Microsoft.VSTS.Scheduling.RemainingWork'] ?? 0;
     const est    = f['Microsoft.VSTS.Scheduling.OriginalEstimate'] ?? 0;
 
-    if (state === 'Proposed') {
-      // ── Proposed: mover a la nueva iteración ─────────────────────────────
-      console.error(`  → #${id} [${type}] Proposed: moviendo a "${ITER_NUEVA.name}"...`);
+    if (state === ST.proposed) {
+      // ── Proposed/New: mover a la nueva iteración ──────────────────────────
+      console.error(`  → #${id} [${type}] ${ST.proposed}: moviendo a "${ITER_NUEVA.name}"...`);
       await client.patch(`/wit/workitems/${id}`, [{
         op: 'replace', path: '/fields/System.IterationPath', value: ITER_NUEVA.path
       }]);
       console.error(`    ✓ Movida`);
       countMovidas++;
 
-    } else if (state === 'Active') {
+    } else if (state === ST.active) {
       // ── Active: dividir en copia nueva + original resuelto ────────────────
       console.error(`  → #${id} [${type}] Active: "${title}"`);
       console.error(`    Estimate original: ${est}h  |  Remaining: ${rw}h`);
@@ -446,15 +504,15 @@ async function main() {
         console.error(`    ⚠ No se pudo poner #${newId} en Active: ${e.message}`);
       }
 
-      // — Actualizar TASK_ORIGINAL (Resolved, título con (1), tiempos ajustados) —
+      // — Actualizar TASK_ORIGINAL (→ estado de cierre, título con (1), tiempos ajustados) —
       const origTitle = titleForOriginal(title);
       await client.patch(`/wit/workitems/${id}`, [
-        { op: 'replace', path: '/fields/System.State',                               value: 'Resolved' },
+        { op: 'replace', path: '/fields/System.State',                               value: ST.resolved },
         { op: 'replace', path: '/fields/System.Title',                               value: origTitle },
         { op: 'replace', path: '/fields/Microsoft.VSTS.Scheduling.OriginalEstimate', value: newEst },
         { op: 'replace', path: '/fields/Microsoft.VSTS.Scheduling.RemainingWork',    value: 0 }
       ]);
-      console.error(`    ✓ Original #${id} → Resolved | título: "${origTitle}" | estimate: ${newEst}h | remaining: 0h`);
+      console.error(`    ✓ Original #${id} → ${ST.resolved} | título: "${origTitle}" | estimate: ${newEst}h | remaining: 0h`);
       countCopiadas++;
     }
   }
