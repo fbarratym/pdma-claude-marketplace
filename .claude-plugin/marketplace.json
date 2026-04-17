@@ -1,8 +1,8 @@
 {
   "name": "pdma-marketplace",
   "metadata": {
-	    "description": "PDMA Internal Claude Code Plugin Marketplace for team collaboration",
-		"version": "1.0.0"
+    "description": "PDMA Internal Claude Code Plugin Marketplace for team collaboration",
+    "version": "1.0.0"
   },
   "owner": {
     "name": "PDMA Team",
@@ -15,22 +15,33 @@
       "description": "Helper commands and utilities for CENSO3 development",
       "source": "./plugins/censo3-helpers",
       "version": "1.0.0",
-	  "category": "helpers",
+      "category": "helpers",
       "author": {
         "name": "fbarra@tym.es"
       },
       "keywords": ["censo3", "utilities", "helpers"]
     },
-	{
+    {
       "name": "project-generic",
       "description": "Herramientas genericas para proyectos",
       "source": "./plugins/project-generic",
       "version": "1.0.0",
-	  "category": "helpers",
+      "category": "helpers",
       "author": {
         "name": "fbarra@tym.es"
       },
       "keywords": ["generic", "utilities", "helpers", ".net", "project"]
+    },
+    {
+      "name": "az-devops-onpremise",
+      "description": "Skills para trabajar con Azure DevOps on-premise mediante la API REST",
+      "source": "./plugins/az-devops-onpremise",
+      "version": "1.0.0",
+      "category": "devops",
+      "author": {
+        "name": "fbarra@tym.es"
+      },
+      "keywords": ["azure-devops", "devops", "work-items", "on-premise", "api", "sprint"]
     }
   ]
 }

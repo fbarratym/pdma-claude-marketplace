@@ -370,6 +370,12 @@ FodyWeavers.xsd
 
 
 # ------------------------
+# AZ-DEVOPS-ONPREMISE PLUGIN
+# ------------------------
+# ConfiguraciÃ³n local con PAT y datos de conexiÃ³n (no subir a git)
+plugins/az-devops-onpremise/**/config.local.json
+
+# ------------------------
 # CLAUDE
 # ------------------------
 # Bloqueamos Claude local files (*.json, *.md, ...)
@@ -389,7 +395,7 @@ Code/.claude/*
 # FIN CLAUDE
 # ------------------------
 
-# Vault de docu para equipo PDMA (es un enlace simbólico a la carpeta de docu, y se gestionará en su propio proyecto de docu, así que no se subirán cmabios desde aquí)
+# Vault de docu para equipo PDMA (es un enlace simbï¿½lico a la carpeta de docu, y se gestionarï¿½ en su propio proyecto de docu, asï¿½ que no se subirï¿½n cmabios desde aquï¿½)
 Code/Docs/PdmaDocVault
 
 ## Ficheros temporales de Claude que se bloquean a veces

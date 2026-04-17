@@ -1,0 +1,12 @@
+{
+  "name": "az-devops-onpremise",
+  "version": "1.0.0",
+  "description": "Skills para trabajar con Azure DevOps on-premise mediante la API REST",
+  "author": {
+    "name": "PDMA Team",
+    "email": "fbarra@tym.es"
+  },
+  "homepage": "https://github.com/fbarratym/pdma-claude-marketplace",
+  "license": "MIT",
+  "keywords": ["azure-devops", "devops", "work-items", "on-premise", "api"]
+}
