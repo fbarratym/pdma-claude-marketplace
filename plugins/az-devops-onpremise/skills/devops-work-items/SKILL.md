@@ -100,6 +100,90 @@ node "$SCRIPTS_DIR/get-workitem.js" 1
 
 ---
 
+### wit_get_iteration_workitems — Buscar work items de una iteración
+
+```bash
+node "$SCRIPTS_DIR/get-iteration-workitems.js" <iterationPath> [states] [types] [top]
+```
+
+| Parámetro       | Default | Notas |
+|-----------------|---------|-------|
+| `iterationPath` | —       | Ruta de iteración o `@currentIteration` (requerido) |
+| `states`        | `all`   | Estados separados por coma. Ej: `Active,Proposed`. `all` = sin filtro |
+| `types`         | `all`   | Tipos separados por coma. Ej: `Task,Bug`. `all` = sin filtro |
+| `top`           | `200`   | Máximo de resultados |
+
+Devuelve siempre los campos de tiempo: `OriginalEstimate`, `RemainingWork`, `CompletedWork`.
+
+**Cuándo usar:** El usuario pide ver las tareas de un sprint concreto, filtradas por estado o tipo.
+
+```bash
+node "$SCRIPTS_DIR/get-iteration-workitems.js" @currentIteration
+node "$SCRIPTS_DIR/get-iteration-workitems.js" @currentIteration Active,Proposed
+node "$SCRIPTS_DIR/get-iteration-workitems.js" @currentIteration all Task,Bug
+node "$SCRIPTS_DIR/get-iteration-workitems.js" "CENSO3\\1\\1.1.35 (2026 abril 2)" Active Task
+```
+
+---
+
+### wit_update_workitem — Actualizar campos de un work item
+
+```bash
+node "$SCRIPTS_DIR/update-workitem.js" <id> <campo=valor> [campo=valor ...]
+```
+
+| Campo       | Campo ADO                                        | Tipo    |
+|-------------|--------------------------------------------------|---------|
+| `title`     | System.Title                                     | texto   |
+| `state`     | System.State                                     | texto   |
+| `iteration` | System.IterationPath                             | ruta    |
+| `area`      | System.AreaPath                                  | ruta    |
+| `estimate`  | Microsoft.VSTS.Scheduling.OriginalEstimate       | horas   |
+| `remaining` | Microsoft.VSTS.Scheduling.RemainingWork          | horas   |
+| `completed` | Microsoft.VSTS.Scheduling.CompletedWork          | horas   |
+| `assigned`  | System.AssignedTo                                | usuario |
+| `priority`  | Microsoft.VSTS.Common.Priority                   | 1-4     |
+| `comment`   | System.History                                   | texto   |
+
+**Cuándo usar:** El usuario quiere actualizar tiempos, cambiar estado, mover a otra iteración, etc.
+
+```bash
+node "$SCRIPTS_DIR/update-workitem.js" 1234 state=Active remaining=5
+node "$SCRIPTS_DIR/update-workitem.js" 1234 estimate=8 remaining=8 completed=0
+node "$SCRIPTS_DIR/update-workitem.js" 1234 completed=3 remaining=5 comment="Avance del día"
+node "$SCRIPTS_DIR/update-workitem.js" 1234 iteration="CENSO3\\1\\1.1.36 (2026 mayo)"
+```
+
+---
+
+### wit_copy_workitem — Copiar un work item (con hijos, vínculos y adjuntos)
+
+```bash
+node "$SCRIPTS_DIR/copy-workitem.js" <id> [opciones]
+```
+
+| Opción               | Default | Efecto |
+|----------------------|---------|--------|
+| `--no-links`         | links=sí | No copiar vínculos relacionados |
+| `--no-attachments`   | adj=sí   | No copiar datos adjuntos |
+| `--no-children`      | hijos=sí | No copiar elementos secundarios recursivamente |
+| `--iteration=<path>` | —        | Asignar a una iteración diferente |
+| `--title=<texto>`    | —        | Título para la copia |
+
+Equivalente exacto a la opción web "Crear copia del elemento de trabajo" con los tres checks activados.
+Los hijos se copian de forma recursiva respetando la jerarquía.
+
+**Cuándo usar:** El usuario quiere duplicar una tarea, user story o epic (con o sin sus hijos).
+
+```bash
+node "$SCRIPTS_DIR/copy-workitem.js" 1234
+node "$SCRIPTS_DIR/copy-workitem.js" 1234 --no-children
+node "$SCRIPTS_DIR/copy-workitem.js" 1234 --iteration="CENSO3\\1\\1.1.36 (2026 mayo)"
+node "$SCRIPTS_DIR/copy-workitem.js" 1234 --no-links --no-attachments --no-children
+```
+
+---
+
 ### wit_get_workitem — Obtener un work item por ID
 
 ```bash

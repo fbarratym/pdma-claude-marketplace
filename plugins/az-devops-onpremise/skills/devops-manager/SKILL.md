@@ -262,6 +262,55 @@ node "$WORK_DIR/get-backlog.js" requirements "CENSO3"
 
 ---
 
+### work_create_iteration — Crear nueva iteración en el proyecto
+
+```bash
+node "$WORK_DIR/create-iteration.js" <name> [startDate] [finishDate] [parentPath]
+```
+
+| Parámetro    | Tipo   | Notas |
+|--------------|--------|-------|
+| `name`       | string | Nombre de la iteración (requerido). Ej: `"1.1.36 (2026 mayo)"` |
+| `startDate`  | string | Fecha inicio `YYYY-MM-DD`. Ej: `"2026-05-05"` |
+| `finishDate` | string | Fecha fin `YYYY-MM-DD`. Ej: `"2026-05-23"` |
+| `parentPath` | string | Ruta del nodo padre. Ej: `"1"` para crear dentro de la carpeta "1". Default: raíz. |
+
+**Cuándo usar:** El usuario quiere crear un nuevo sprint/iteración en el proyecto.
+
+**IMPORTANTE:** Este paso solo crea el nodo. Para que el sprint aparezca en el equipo, ejecutar después `add-team-iteration.js` con el GUID devuelto.
+
+```bash
+# Crear iteración en la raíz
+node "$WORK_DIR/create-iteration.js" "Sprint 42"
+
+# Crear con fechas dentro de la carpeta "1"
+node "$WORK_DIR/create-iteration.js" "1.1.36 (2026 mayo)" 2026-05-05 2026-05-23 "1"
+```
+
+La respuesta incluye el campo `identifier` (GUID) necesario para el siguiente paso.
+
+---
+
+### work_add_team_iteration — Asignar iteración a un equipo
+
+```bash
+node "$WORK_DIR/add-team-iteration.js" <iterationId> [team]
+```
+
+| Parámetro     | Tipo   | Notas |
+|---------------|--------|-------|
+| `iterationId` | GUID   | ID de la iteración (de `create-iteration.js` o `get-iterations.js`) |
+| `team`        | string | Default: `defaultTeam` |
+
+**Cuándo usar:** Después de crear una iteración, para asignarla al planning de sprints del equipo.
+
+```bash
+node "$WORK_DIR/add-team-iteration.js" a1b2c3d4-1234-5678-abcd-ef0123456789
+node "$WORK_DIR/add-team-iteration.js" a1b2c3d4-1234-5678-abcd-ef0123456789 "CENSO3 Team"
+```
+
+---
+
 ### work_get_queries — Consultas guardadas
 
 ```bash
@@ -305,6 +354,17 @@ node "$WIT_DIR/query-wiql.js" "SELECT [System.Id],[System.Title],[System.State],
 
 ```bash
 node "$WORK_DIR/get-iterations.js" 5
+```
+
+### "Crea el sprint X con fechas Y-Z y asígnalo al equipo"
+
+```bash
+# 1. Crear el nodo de iteración en el árbol del proyecto
+node "$WORK_DIR/create-iteration.js" "1.1.36 (2026 mayo)" 2026-05-05 2026-05-23 "1"
+# → anota el "identifier" del resultado
+
+# 2. Asignarlo al equipo
+node "$WORK_DIR/add-team-iteration.js" "<identifier>"
 ```
 
 ### "¿Cuántos puntos tiene el sprint actual?"
