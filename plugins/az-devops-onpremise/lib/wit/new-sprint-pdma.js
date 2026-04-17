@@ -24,6 +24,11 @@
  */
 
 const AdoApiClient = require('../api-client');
+const path         = require('path');
+const fs           = require('fs');
+
+// Fichero de log acumulativo junto a config.local.json (raíz del plugin)
+const LOG_FILE = path.resolve(__dirname, '../../sprint-pdma.log.md');
 
 // ── Constantes ─────────────────────────────────────────────────────────────
 
@@ -342,9 +347,71 @@ async function createCopy(client, sourceId, overrides) {
   return newId;
 }
 
+// ── Log ──────────────────────────────────────────────────────────────────────
+
+/**
+ * Escribe (o añade) una entrada de log en sprint-pdma.log.md.
+ *
+ * @param {object} ctx
+ * @param {string}   ctx.iterActual   Nombre de la iteración origen
+ * @param {string}   ctx.iterNueva    Nombre de la iteración destino
+ * @param {object[]} ctx.entries      Entradas de acción (una por work item modificado)
+ * @param {object[]} ctx.summary      Resumen de CompletedWork por persona
+ * @param {Date}     ctx.startTime    Momento de inicio de la ejecución
+ */
+function writeLog({ iterActual, iterNueva, entries, summary, startTime }) {
+  const ts = startTime.toLocaleString('es-ES', {
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit'
+  });
+
+  const lines = [];
+  lines.push(`## ${ts} — "${iterNueva}" (origen: "${iterActual}")`);
+  lines.push('');
+
+  // ── Tabla de cambios ──
+  lines.push('### Cambios realizados');
+  lines.push('');
+  lines.push('| ID | Tipo | Acción | Título (final) | Iteración (final) | Estado | Estimate | Remaining | Completed |');
+  lines.push('|---|---|---|---|---|---|---|---|---|');
+
+  for (const e of entries) {
+    const est  = e.estimateFrom !== null ? `${e.estimateFrom}→${e.estimateTo}h` : `${e.estimateTo}h`;
+    const rem  = e.remainingFrom !== null ? `${e.remainingFrom}→${e.remainingTo}h` : `${e.remainingTo}h`;
+    const comp = e.completedWork !== null ? `${e.completedWork}h` : '—';
+    const st   = e.stateFrom ? `${e.stateFrom}→${e.stateTo}` : e.stateTo || '—';
+    const estCol  = (e.estimateTo !== null)  ? est  : '—';
+    const remCol  = (e.remainingTo !== null) ? rem  : '—';
+    lines.push(`| #${e.id} | ${e.type} | ${e.action} | ${e.title} | ${e.iteration} | ${st} | ${estCol} | ${remCol} | ${comp} |`);
+  }
+
+  lines.push('');
+
+  // ── Tabla de resumen ──
+  lines.push(`### Resumen CompletedWork — ${iterActual}`);
+  lines.push('');
+  lines.push('| Persona | CompletedWork |');
+  lines.push('|---|---|');
+  let total = 0;
+  for (const s of summary) {
+    lines.push(`| ${s.person} | ${String(s.hours).replace('.', ',')}h |`);
+    total += s.hours;
+  }
+  lines.push(`| **TOTAL** | **${String(round2(total)).replace('.', ',')}h** |`);
+  lines.push('');
+  lines.push('---');
+  lines.push('');
+
+  fs.appendFileSync(LOG_FILE, lines.join('\n'), 'utf8');
+  console.error(`\n  Log guardado en: ${LOG_FILE}`);
+}
+
 // ── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
+  const startTime  = new Date();
+  const logEntries = [];   // entradas de cambios para el log
+
   const [,, iterArg] = process.argv;
 
   if (!iterArg) {
@@ -474,6 +541,14 @@ async function main() {
         throw new Error(`No se pudo mover #${id} a "${ITER_NUEVA.name}": ${e.message}`);
       }
       console.error(`    ✓ Movida`);
+      logEntries.push({
+        id, type, action: 'Movida', title,
+        iteration: ITER_NUEVA.name,
+        stateFrom: state, stateTo: state,
+        estimateFrom: null, estimateTo: null,
+        remainingFrom: null, remainingTo: null,
+        completedWork: null
+      });
       countMovidas++;
 
     } else if (state === ST.active) {
@@ -484,8 +559,9 @@ async function main() {
       // — Calcular estimates —
       // Si est-rw <= 0 (tarea sobreestimada), ambos (original y copia) usan est/2
       const overBudget  = round2(est - rw) <= 0;
-      const newEstOrig  = overBudget ? round2(est / 2) : round2(est - rw); // para TASK_ORIGINAL
-      const newEstCopia = overBudget ? round2(est / 2) : rw;               // para TASK_NUEVA
+      const newEstOrig  = overBudget ? round2(est / 2) : round2(est - rw);
+      const newEstCopia = overBudget ? round2(est / 2) : rw;
+      const fallbackNote = overBudget ? ' *(fallback est/2)*' : '';
 
       // — Crear TASK_NUEVA (copia en nueva iteración, en estado Active) —
       const newTitle = titleForCopy(title);
@@ -514,10 +590,21 @@ async function main() {
         );
       }
 
+      // Log de TASK_NUEVA
+      logEntries.push({
+        id: newId, type, action: `Copia de #${id}${fallbackNote}`, title: newTitle,
+        iteration: ITER_NUEVA.name,
+        stateFrom: null, stateTo: ST.active,
+        estimateFrom: null, estimateTo: newEstCopia,
+        remainingFrom: null, remainingTo: rw,
+        completedWork: 0
+      });
+
       // — Actualizar TASK_ORIGINAL (→ estado de cierre, título con (1), tiempos ajustados) —
       // Se hace en dos PATCHes: algunos templates (Agile) no permiten combinar el cambio
       // de estado con RemainingWork=0 en la misma llamada (regla de campo del template).
       const origTitle = titleForOriginal(title);
+      const cw = f['Microsoft.VSTS.Scheduling.CompletedWork'] ?? 0;
 
       // PATCH 1: estado + título + estimate (lo crítico)
       try {
@@ -545,6 +632,17 @@ async function main() {
       }
 
       console.error(`    ✓ Original #${id} → ${ST.resolved} | título: "${origTitle}" | estimate: ${newEstOrig}h | remaining: 0h`);
+
+      // Log de TASK_ORIGINAL
+      logEntries.push({
+        id, type, action: `Original → ${ST.resolved} (copia: #${newId})${fallbackNote}`, title: origTitle,
+        iteration: ITER_ACTUAL.name,
+        stateFrom: ST.active, stateTo: ST.resolved,
+        estimateFrom: est, estimateTo: newEstOrig,
+        remainingFrom: rw, remainingTo: 0,
+        completedWork: cw
+      });
+
       countCopiadas++;
     }
   }
@@ -556,7 +654,7 @@ async function main() {
   // ────────────────────────────────────────────────────────────────────────────
   console.error('\n[6/6] Generando resumen de CompletedWork en iteración actual...\n');
 
-  const finalItems = await getItems(client, ITER_ACTUAL.path, null); // todos los estados
+  const finalItems = await getItems(client, ITER_ACTUAL.path, null);
 
   const byPerson = {};
   for (const wi of finalItems) {
@@ -574,8 +672,7 @@ async function main() {
 
   const sorted = Object.entries(byPerson).sort(([, a], [, b]) => b - a);
   for (const [name, hours] of sorted) {
-    const hoursStr = String(hours).replace('.', ',');
-    console.log(`  ${name.padEnd(36)} ${hoursStr}h`);
+    console.log(`  ${name.padEnd(36)} ${String(hours).replace('.', ',')}h`);
   }
 
   const totalCW = round2(sorted.reduce((s, [, h]) => s + h, 0));
@@ -583,6 +680,10 @@ async function main() {
   console.log(linea);
   console.log(`✓ Sprint "${ITER_NUEVA.name}" inicializado correctamente.`);
   console.log(linea);
+
+  // ── Escribir log ──────────────────────────────────────────────────────────
+  const logSummary = sorted.map(([person, hours]) => ({ person, hours }));
+  writeLog({ iterActual: ITER_ACTUAL.name, iterNueva: ITER_NUEVA.name, entries: logEntries, summary: logSummary, startTime });
 }
 
 main().catch(e => {
