@@ -28,7 +28,7 @@ Guarda la ruta obtenida en `SCRIPT_PATH`.
 Antes de ejecutar, comprobar si existe `config.local.json` en la raíz del plugin (un nivel por encima de `lib/`):
 
 ```bash
-CONFIG_PATH="$(dirname "$(dirname "$SCRIPT_PATH")")/config.local.json"
+CONFIG_PATH="$(dirname "$(dirname "$(dirname "$SCRIPT_PATH")")")/config.local.json"
 test -f "$CONFIG_PATH" && echo "EXISTS" || echo "MISSING"
 ```
 
