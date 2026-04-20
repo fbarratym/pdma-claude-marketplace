@@ -374,6 +374,7 @@ FodyWeavers.xsd
 # ------------------------
 # Configuración local con PAT y datos de conexión (no subir a git)
 plugins/az-devops-onpremise/**/config.local.json
+plugins/az-devops-onpremise/**/*.local.md
 
 # ------------------------
 # CLAUDE
