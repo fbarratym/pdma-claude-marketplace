@@ -31,7 +31,7 @@ const path               = require('path');
 const fs                 = require('fs');
 
 // Fichero de log acumulativo junto a config.local.json (raíz del plugin)
-const LOG_FILE = path.resolve(__dirname, '../../sprint-pdma.local.md');
+const LOG_FILE = path.resolve(__dirname, '../../sprint-pdma.log.local.md');
 
 // ── Constantes ─────────────────────────────────────────────────────────────
 

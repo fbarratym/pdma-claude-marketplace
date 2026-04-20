@@ -2,7 +2,7 @@
   "name": "pdma-marketplace",
   "metadata": {
     "description": "PDMA Internal Claude Code Plugin Marketplace for team collaboration",
-    "version": "1.0.2"
+    "version": "1.0.3"
   },
   "owner": {
     "name": "PDMA Team",
@@ -36,7 +36,7 @@
       "name": "az-devops-onpremise",
       "description": "Skills para trabajar con Azure DevOps on-premise mediante la API REST",
       "source": "./plugins/az-devops-onpremise",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "category": "devops",
       "author": {
         "name": "fbarra@tym.es"
