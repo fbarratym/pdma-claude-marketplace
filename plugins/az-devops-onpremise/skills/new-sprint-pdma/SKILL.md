@@ -1,7 +1,7 @@
 ---
 name: new-sprint-pdma
 description: Inicializa un nuevo sprint PDMA de forma autónoma. Úsalo cuando el usuario diga "crear nuevo sprint", "inicializar sprint", "preparar siguiente sprint", "arrancar el sprint X" o similar. El usuario debe indicar el proyecto (nombre en config.local.json) y el nombre exacto de la iteración destino (ya debe existir en ADO). El script valida, comprueba tareas pendientes, procesa Proposed y Active, y genera un resumen.
-version: 1.0.4
+version: 1.0.5
 plugin: az-devops-onpremise
 tools:
   - Bash
@@ -25,23 +25,28 @@ Guarda la ruta obtenida en `SCRIPT_PATH`.
 
 ## PASO 0.5 — Verificar configuración
 
-Antes de ejecutar, comprobar si existe `config.local.json` en la raíz del plugin (un nivel por encima de `lib/`):
+Comprobar si existe `config.local.json` en `CLAUDE_PLUGIN_DATA`:
 
 ```bash
-CONFIG_PATH="$(dirname "$(dirname "$(dirname "$SCRIPT_PATH")")")/config.local.json"
+CONFIG_PATH="${CLAUDE_PLUGIN_DATA:-$HOME/.claude/plugins/data/az-devops-onpremise-pdma-marketplace}/config.local.json"
 test -f "$CONFIG_PATH" && echo "EXISTS" || echo "MISSING"
 ```
 
 **Si el archivo NO existe:**
 
 1. Informar al usuario de que falta la configuración.
-2. Pedir los siguientes datos:
+2. Indicar que debe crearlo en:
+   ```
+   ~/.claude/plugins/data/az-devops-onpremise-pdma-marketplace/config.local.json
+   ```
+   En Windows: `C:\Users\<Usuario>\.claude\plugins\data\az-devops-onpremise-pdma-marketplace\config.local.json`
+3. Pedir los siguientes datos:
    - `serverUrl` — URL base del servidor TFS (ej: `https://tfs.empresa.com/tfs`)
    - `collection` — Nombre de la colección (normalmente `DefaultCollection`)
    - `project` — Nombre del proyecto en Azure DevOps
    - `pat` — Personal Access Token
    - `defaultTeam` — Equipo por defecto (opcional; si se omite se usa el valor de `project`)
-3. Crear el archivo con la entrada correspondiente al proyecto indicado:
+4. Crear el directorio si no existe y el archivo con la entrada correspondiente:
 
 ```json
 [
@@ -107,6 +112,6 @@ Si algún check falla, el script para con código de salida 1 mostrando las tare
 ## Notas
 
 - El script es **completamente autónomo**: no requiere intervención intermedia.
-- Usa el mismo `config.local.json` compartido por todos los skills del plugin (raíz del plugin).
+- Usa `config.local.json` ubicado en `CLAUDE_PLUGIN_DATA` (`~/.claude/plugins/data/az-devops-onpremise-pdma-marketplace/`). Este archivo persiste entre reinstalaciones del plugin.
 - Si el servidor devuelve error al poner una tarea en Active (estado no permitido por flujo), lo registra como advertencia y continúa.
 - Las tareas en estado Closed, Resolved u otros son ignoradas en el procesamiento (no se modifican).
