@@ -80,9 +80,40 @@ Muestra el total de CompletedWork por persona en la iteración que acaba de cerr
 
 ---
 
+## Configuración (`config.local.json`)
+
+El script busca `config.local.json` en `CLAUDE_PLUGIN_DATA`, que persiste entre reinstalaciones del plugin:
+
+```
+~/.claude/plugins/data/az-devops-onpremise-pdma-marketplace/config.local.json
+```
+
+En Windows:
+```
+C:\Users\<Usuario>\.claude\plugins\data\az-devops-onpremise-pdma-marketplace\config.local.json
+```
+
+Este archivo **no se borra** al reinstalar o actualizar el plugin con `/plugin`.
+
+Estructura del archivo:
+```json
+[
+  {
+    "name":        "MiProyecto",
+    "serverUrl":   "https://tfs.empresa.com/tfs",
+    "collection":  "DefaultCollection",
+    "project":     "nombre-en-ado",
+    "pat":         "tu-personal-access-token",
+    "defaultTeam": "nombre-equipo"
+  }
+]
+```
+
+---
+
 ## Log
 
-Cada ejecución añade una entrada al archivo `sprint-pdma.local.md` (junto a `config.local.json`). El log es acumulativo — nunca sobreescribe entradas anteriores. Este archivo está en `.gitignore` y es local a cada usuario.
+Cada ejecución añade una entrada al archivo `sprint-pdma.log.local.md` (junto a `config.local.json`). El log es acumulativo — nunca sobreescribe entradas anteriores. Este archivo está en `.gitignore` y es local a cada usuario.
 
 ---
 

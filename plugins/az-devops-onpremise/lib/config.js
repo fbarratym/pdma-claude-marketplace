@@ -4,9 +4,10 @@
  * config.js
  * Carga y valida la configuración de conexión a Azure DevOps.
  *
- * El fichero config.local.json se encuentra en la RAÍZ del plugin:
- *   plugins/az-devops-onpremise/config.local.json
- * (un nivel por encima de esta carpeta lib/)
+ * Busca config.local.json en CLAUDE_PLUGIN_DATA:
+ *   ~/.claude/plugins/data/az-devops-onpremise-pdma-marketplace/config.local.json
+ *
+ * Esta ubicación persiste entre reinstalaciones del plugin.
  *
  * Estructura esperada (array de proyectos):
  * [
@@ -31,8 +32,14 @@
 
 const path = require('path');
 const fs   = require('fs');
+const os   = require('os');
 
-const CONFIG_PATH = path.resolve(__dirname, '../config.local.json');
+const CONFIG_FILENAME = 'config.local.json';
+
+// CLAUDE_PLUGIN_DATA: persiste entre reinstalaciones del plugin
+const PLUGIN_DATA_DIR = process.env.CLAUDE_PLUGIN_DATA
+  || path.join(os.homedir(), '.claude', 'plugins', 'data', 'az-devops-onpremise-pdma-marketplace');
+const CONFIG_PATH = path.join(PLUGIN_DATA_DIR, CONFIG_FILENAME);
 
 function loadConfig(projectName = null) {
   // ── 1. Verificar que existe ────────────────────────────────────────────────
@@ -47,7 +54,7 @@ function loadConfig(projectName = null) {
     }];
     console.error('ERROR: Fichero de configuración no encontrado.');
     console.error(`  Ruta esperada: ${CONFIG_PATH}`);
-    console.error('\nCrea el fichero con la siguiente estructura:');
+    console.error('\nEstructura esperada:');
     console.error(JSON.stringify(template, null, 2));
     process.exit(1);
   }
