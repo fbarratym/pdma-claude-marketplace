@@ -23,6 +23,45 @@ Guarda la ruta obtenida en `SCRIPT_PATH`.
 
 ---
 
+## PASO 0.5 — Verificar configuración
+
+Antes de ejecutar, comprobar si existe `config.local.json` en la raíz del plugin (un nivel por encima de `lib/`):
+
+```bash
+CONFIG_PATH="$(dirname "$(dirname "$SCRIPT_PATH")")/config.local.json"
+test -f "$CONFIG_PATH" && echo "EXISTS" || echo "MISSING"
+```
+
+**Si el archivo NO existe:**
+
+1. Informar al usuario de que falta la configuración.
+2. Pedir los siguientes datos:
+   - `serverUrl` — URL base del servidor TFS (ej: `https://tfs.empresa.com/tfs`)
+   - `collection` — Nombre de la colección (normalmente `DefaultCollection`)
+   - `project` — Nombre del proyecto en Azure DevOps
+   - `pat` — Personal Access Token
+   - `defaultTeam` — Equipo por defecto (opcional; si se omite se usa el valor de `project`)
+3. Crear el archivo con la entrada correspondiente al proyecto indicado:
+
+```json
+[
+  {
+    "name":        "<PROYECTO>",
+    "serverUrl":   "<serverUrl>",
+    "collection":  "<collection>",
+    "project":     "<project>",
+    "pat":         "<pat>",
+    "defaultTeam": "<defaultTeam>"
+  }
+]
+```
+
+**Si el archivo existe pero no contiene el proyecto indicado**, avisar al usuario y preguntar si desea añadir la entrada antes de continuar.
+
+**Si el archivo existe y contiene el proyecto**, continuar al siguiente paso.
+
+---
+
 ## Uso
 
 ```bash
