@@ -7,5 +7,6 @@
   },
   "enabledPlugins": {
     "superpowers@claude-plugins-official": true
-  }
+  },
+  "spinnerTipsEnabled": false
 }

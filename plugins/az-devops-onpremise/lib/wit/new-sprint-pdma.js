@@ -558,7 +558,31 @@ async function main() {
       countMovidas++;
 
     } else if (state === ST.active) {
-      // ── Active: dividir en copia nueva + original resuelto ────────────────
+      const cw = f['Microsoft.VSTS.Scheduling.CompletedWork'] ?? 0;
+
+      if (cw === 0) {
+        // ── Active sin trabajo completado: mover a nueva iteración ───────────
+        console.error(`  → #${id} [${type}] Active (CW=0): moviendo a "${ITER_NUEVA.name}"...`);
+        try {
+          await client.patch(`/wit/workitems/${id}`, [{
+            op: 'replace', path: '/fields/System.IterationPath', value: ITER_NUEVA.path
+          }]);
+        } catch (e) {
+          throw new Error(`No se pudo mover #${id} a "${ITER_NUEVA.name}": ${e.message}`);
+        }
+        console.error(`    ✓ Movida`);
+        logEntries.push({
+          id, type, action: 'Movida (Active CW=0)', title,
+          iteration: ITER_NUEVA.name,
+          stateFrom: state, stateTo: state,
+          estimateFrom: null, estimateTo: null,
+          remainingFrom: null, remainingTo: null,
+          completedWork: 0
+        });
+        countMovidas++;
+
+      } else {
+      // ── Active con trabajo completado: dividir en copia nueva + original resuelto ──
       console.error(`  → #${id} [${type}] Active: "${title}"`);
       console.error(`    Estimate original: ${est}h  |  Remaining: ${rw}h`);
 
@@ -610,7 +634,6 @@ async function main() {
       // Se hace en dos PATCHes: algunos templates (Agile) no permiten combinar el cambio
       // de estado con RemainingWork=0 en la misma llamada (regla de campo del template).
       const origTitle = titleForOriginal(title);
-      const cw = f['Microsoft.VSTS.Scheduling.CompletedWork'] ?? 0;
 
       // PATCH 1: estado + título + estimate (lo crítico)
       try {
@@ -650,6 +673,7 @@ async function main() {
       });
 
       countCopiadas++;
+      } // fin else (cw > 0)
     }
   }
 
