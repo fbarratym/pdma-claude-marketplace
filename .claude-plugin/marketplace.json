@@ -2,7 +2,7 @@
   "name": "pdma-marketplace",
   "metadata": {
     "description": "PDMA Internal Claude Code Plugin Marketplace for team collaboration",
-    "version": "1.0.0"
+    "version": "1.0.1"
   },
   "owner": {
     "name": "PDMA Team",
