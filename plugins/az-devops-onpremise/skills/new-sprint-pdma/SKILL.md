@@ -1,7 +1,7 @@
 ---
 name: new-sprint-pdma
 description: Inicializa un nuevo sprint PDMA de forma autónoma. Úsalo cuando el usuario diga "crear nuevo sprint", "inicializar sprint", "preparar siguiente sprint", "arrancar el sprint X" o similar. El usuario debe indicar el proyecto (nombre en config.local.json) y el nombre exacto de la iteración destino (ya debe existir en ADO). El script valida, comprueba tareas pendientes, procesa Proposed y Active, y genera un resumen.
-version: 1.0.3
+version: 1.0.4
 plugin: az-devops-onpremise
 tools:
   - Bash
