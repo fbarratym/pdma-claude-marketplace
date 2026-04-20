@@ -29,9 +29,12 @@ const AdoApiClient       = require('../api-client');
 const { loadConfig }     = require('../config');
 const path               = require('path');
 const fs                 = require('fs');
+const os                 = require('os');
 
-// Fichero de log acumulativo junto a config.local.json (raíz del plugin)
-const LOG_FILE = path.resolve(__dirname, '../../sprint-pdma.log.local.md');
+// Fichero de log acumulativo en CLAUDE_PLUGIN_DATA (junto a config.local.json)
+const PLUGIN_DATA_DIR = process.env.CLAUDE_PLUGIN_DATA
+  || path.join(os.homedir(), '.claude', 'plugins', 'data', 'az-devops-onpremise-pdma-marketplace');
+const LOG_FILE = path.join(PLUGIN_DATA_DIR, 'sprint-pdma.log.local.md');
 
 // ── Constantes ─────────────────────────────────────────────────────────────
 
