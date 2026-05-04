@@ -15,11 +15,22 @@ Skill que ejecuta el script autónomo `new-sprint-pdma.js` para inicializar un s
 
 ## PASO 0 — Localizar el script
 
-```bash
-find "$HOME" -name "new-sprint-pdma.js" -path "*/az-devops-onpremise/lib/wit/*" 2>/dev/null | head -1
+El script está en `lib/wit/new-sprint-pdma.js` dentro del plugin. Derivar
+`SCRIPT_PATH` subiendo dos niveles desde el `Base directory` indicado en la
+cabecera de este skill (`skills/new-sprint-pdma` → raíz del plugin) y añadiendo
+`lib/wit/new-sprint-pdma.js`.
+
+PowerShell:
+```powershell
+$SKILL_BASE = "<Base directory del skill>"   # valor exacto del header
+$SCRIPT_PATH = Join-Path (Split-Path (Split-Path $SKILL_BASE)) "lib\wit\new-sprint-pdma.js"
 ```
 
-Guarda la ruta obtenida en `SCRIPT_PATH`.
+Bash:
+```bash
+SKILL_BASE="<Base directory del skill>"   # valor exacto del header
+SCRIPT_PATH="$(dirname "$(dirname "$SKILL_BASE")")/lib/wit/new-sprint-pdma.js"
+```
 
 ---
 

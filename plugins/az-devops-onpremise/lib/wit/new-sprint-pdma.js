@@ -359,19 +359,22 @@ async function createCopy(client, sourceId, overrides) {
  * Escribe (o añade) una entrada de log en sprint-pdma.log.md.
  *
  * @param {object} ctx
+ * @param {string}   ctx.project      Nombre del proyecto (cfg.name)
  * @param {string}   ctx.iterActual   Nombre de la iteración origen
  * @param {string}   ctx.iterNueva    Nombre de la iteración destino
  * @param {object[]} ctx.entries      Entradas de acción (una por work item modificado)
  * @param {object[]} ctx.summary      Resumen de CompletedWork por persona
  * @param {Date}     ctx.startTime    Momento de inicio de la ejecución
  */
-function writeLog({ iterActual, iterNueva, entries, summary, startTime }) {
+function writeLog({ project, iterActual, iterNueva, entries, summary, startTime }) {
   const ts = startTime.toLocaleString('es-ES', {
     year: 'numeric', month: '2-digit', day: '2-digit',
     hour: '2-digit', minute: '2-digit', second: '2-digit'
   });
 
   const lines = [];
+  lines.push(`# Proyecto: ${project}`);
+  lines.push('');
   lines.push(`## ${ts} — "${iterNueva}" (origen: "${iterActual}")`);
   lines.push('');
 
@@ -716,7 +719,7 @@ async function main() {
 
   // ── Escribir log ──────────────────────────────────────────────────────────
   const logSummary = sorted.map(([person, hours]) => ({ person, hours }));
-  writeLog({ iterActual: ITER_ACTUAL.name, iterNueva: ITER_NUEVA.name, entries: logEntries, summary: logSummary, startTime });
+  writeLog({ project: cfg.name, iterActual: ITER_ACTUAL.name, iterNueva: ITER_NUEVA.name, entries: logEntries, summary: logSummary, startTime });
 }
 
 main().catch(e => {
